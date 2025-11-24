@@ -7,4 +7,27 @@ class Robot:
         self.bateria = bateria      #Nivel de bateria(%).
         self.deposito = deposito        #Deposito de lixo (%).
         self.localizacao = localizacao      #Localizaçõ do robot.
-        self.tarefa_atual = tarefa_atual        #Tarefa atribuida no momento
+        self.tarefa_atual = tarefa_atual        #Tarefa atribuida no momento.
+
+    def __str__(self):      
+        #Representação em texto do robot (util para o print).
+
+        return f"[Robot {self.id_robot}] {self.modelo} - Bat: {self.bateria}% - Status: {self.estado}"
+    
+    def pode_trabalhar(self):       
+        #Verifica se o robot tem bateria e escpaço no deposito (Retorna True ou False).
+
+        bateria_ok = self.bateria > 20
+        deposito_ok = self.deposito < 80
+        avaria = self.estado == "Com Avaria"
+        return bateria_ok and deposito_ok and not avaria
+    
+    def consumir_recursos(self, gasto_bateria, enchimento_deposito):
+        #simula o consumo do robot até o final de uma tarefa.
+
+        self.nivel_bateria -= gasto_bateria
+        self.nivel_deposito += enchimento_deposito
+
+        #Validações de limites (não deixa a bateria abaixo de 0% ou o depósito acima de 100%)
+        if self.nivel_bateria < 0: self.nivel_bateria = 0
+        if self.nivel_deposito > 100: self.nivel_deposito = 100
