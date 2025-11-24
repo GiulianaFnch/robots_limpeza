@@ -26,6 +26,7 @@ def exibir_menu():
     print("\n--- RELATÓRIOS E MAPAS ---")
     print("8. Gerar Mapa de Eficiência")    # [cite: 25]
     print("9. Relatório de Alertas")        # [cite: 26]
+    print("10. Limpar tela")   
     
     print("\n0. Sair")
     print("="*40)
@@ -78,6 +79,9 @@ def main():
         elif opcao == '0':
             print("A encerrar sistema...")
             break
+
+        elif opcao == '10':
+            limpar_tela()
             
         else:
             print("Opção inválida! Tente novamente.")
