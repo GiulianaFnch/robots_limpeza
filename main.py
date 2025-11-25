@@ -1,7 +1,7 @@
 # Arquivo: main.py
 import sys
-# import database as db  <-- Descomentar quando você criar o database.py
-# from models.robot import Robot
+import database as db  
+from models.robot import Robot
 # from models.tarefa import Tarefa
 
 def limpar_tela():
@@ -39,9 +39,15 @@ def main():
         if opcao == '1':
             # Lógica para adicionar robot
             print("\n>> Adicionar Novo Robot")
-            # modelo = input("Modelo (Aspirador/Lavador): ")
-            # local = input("Localização Inicial: ")
-            # Aqui chamaremos: db.adicionar_robot(modelo, local)
+            modelo = "Aspirador" # PEDRO - aqui temos que alterar pra ser input() do usuário (ele vai escrever o modelo e localização)
+            localizacao = "Sala"
+
+            # O primeiro argumento é o 'id' do robot.
+            # Passamos None porque o ID será gerado automaticamente pelo banco de dados
+            # quando o robot for adicionado através de `db.adicionar_robot_bd()`.
+            robot = Robot(None, modelo, localizacao)
+            db.adicionar_robot_bd(robot)
+            
             input("Pressione ENTER para continuar...")
 
         elif opcao == '2':
@@ -54,7 +60,8 @@ def main():
 
         elif opcao == '3':
             print("\n>> Lista de Robots da Frota")
-            # Aqui chamaremos: db.listar_robots()
+            for robot in db.listar_robots_bd():
+                print(robot)
             input("Pressione ENTER para continuar...")
 
         elif opcao == '4':
