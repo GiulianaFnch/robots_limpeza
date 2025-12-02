@@ -2,7 +2,7 @@
 import sys
 import database as db  
 from models.robot import Robot
-# from models.tarefa import Tarefa
+from models.tarefa import Tarefa
 
 def limpar_tela():
     """Função auxiliar para limpar o terminal (opcional, mas fica bonito)"""
@@ -32,6 +32,8 @@ def exibir_menu():
     print("="*40)
 
 def main():
+    db.inicializar_bd()
+    
     while True:
         exibir_menu()
         opcao = input("Escolha uma opção: ")
@@ -39,49 +41,57 @@ def main():
         if opcao == '1':
             # Lógica para adicionar robot
             print("\n>> Adicionar Novo Robot")
-            modelo = "Aspirador" # PEDRO - aqui temos que alterar pra ser input() do usuário (ele vai escrever o modelo e localização)
+            modelo = "Aspirador" #  aqui temos que alterar pra ser input() do usuário (ele vai escrever o modelo e localização)
             localizacao = "Sala"
 
-            # O primeiro argumento é o 'id' do robot.
-            # Passamos None porque o ID será gerado automaticamente pelo banco de dados
-            # quando o robot for adicionado através de `db.adicionar_robot_bd()`.
             robot = Robot(None, modelo, localizacao)
             db.adicionar_robot_bd(robot)
             
-            input("Pressione ENTER para continuar...")
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '2':
             # Lógica para criar tarefa
             print("\n>> Nova Tarefa de Limpeza")
-            # tipo = input("Tipo (Aspiração/Lavagem): ")
-            # area = input("Nome da Área: ")
-            # Aqui chamaremos: db.criar_tarefa(tipo, area)
-            input("Pressione ENTER para continuar...")
+            tipo = input("Tipo (Aspiração/Lavagem): ")
+            area = input("Nome da Área: ")
+            
+            tarefa = Tarefa(None, tipo, area)
+            db.adicionar_tarefa_bd(tarefa)
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '3':
             print("\n>> Lista de Robots da Frota")
-            for robot in db.listar_robots_bd():
-                print(robot)
-            input("Pressione ENTER para continuar...")
+            robots = db.listar_robots_bd()
+            if robots:
+                for robot in robots:
+                    print(robot)
+            else:
+                print("Nenhum robot encontrado na frota.")
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '4':
             print("\n>> Lista de Tarefas Pendentes e em Curso")
-            # Aqui chamaremos: db.listar_tarefas()
-            input("Pressione ENTER para continuar...")
+            tarefas = db.listar_tarefas_bd()
+            if tarefas:
+                for tarefa in tarefas:
+                    print(tarefa)
+            else:
+                print("Nenhuma tarefa encontrada.")
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '5':
             print("\n>> Atribuir Tarefa")
-            # Esta será a parte complexa que faremos juntos
+            # Esta será a parte complexa - AQUI
             # 1. Listar robots disponiveis
             # 2. Listar tarefas pendentes
             # 3. Pedir IDs e validar
-            input("Pressione ENTER para continuar...")
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '6':
             print("\n>> Simulando funcionamento do sistema...")
             # Aqui chamaremos a função de simulação que desconta bateria
             print("... Baterias atualizadas e depósitos a encher ...")
-            input("Pressione ENTER para continuar...")
+            input("\nPressione ENTER para continuar...")
 
         elif opcao == '0':
             print("A encerrar sistema...")

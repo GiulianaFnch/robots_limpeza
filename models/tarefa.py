@@ -11,7 +11,7 @@ class Tarefa:
         self.fim = None
 
     def __str__(self):
-        return f"[Tarefa {self.id_tarefa}] {self.tipo_limpeza} - Area: {self.area}m² - Status: {self.estado}"
+        return f"[Tarefa {self.id_tarefa}] - Tipo de limpeza: {self.tipo_limpeza} - Area/Divisao: {self.area} - Estado: {self.estado}"
     
     def iniciar_tarefa(self, id_robot):
         if self.estado != "Pendente":

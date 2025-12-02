@@ -1,26 +1,42 @@
 # Arquivo: database.py
 import sqlite3
 from models.robot import Robot 
+from models.tarefa import Tarefa
 
-def criar_banco():
-    conexao = sqlite3.connect('gestao_robots.db')
-    cursor = conexao.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS robots (
-            id_robot INTEGER PRIMARY KEY AUTOINCREMENT,
-            modelo TEXT,
-            estado TEXT,
-            bateria INTEGER,
-            deposito INTEGER,
-            localizacao TEXT,
-            tarefa_atual TEXT
-        )
-    ''')
-    conexao.commit()
-    conexao.close()
+def inicializar_bd():
+    try:    
+        conexao = sqlite3.connect('gestao_robots.db')
+        cursor = conexao.cursor()
+        cursor.executescript('''
+            CREATE TABLE IF NOT EXISTS robots (
+                id_robot INTEGER PRIMARY KEY AUTOINCREMENT,
+                modelo TEXT,
+                estado TEXT,
+                bateria INTEGER,
+                deposito INTEGER,
+                localizacao TEXT,
+                tarefa_atual TEXT
+            );
+            CREATE TABLE IF NOT EXISTS tarefas (
+                id_tarefa INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo_limpeza TEXT,
+                area TEXT,
+                estado TEXT,
+                id_robot INTEGER,
+                inicio DATETIME,
+                fim DATETIME
+            );
+            
+        ''')
+        conexao.commit()
+        
+    except sqlite3.Error as e:
+        print(f"Erro ao criar tabelas: {e}")
+    finally:
+        if conexao:
+            conexao.close()
 
 def adicionar_robot_bd(robot):
-    criar_banco()
     """
     Recebe um objeto da classe Robot e salva no banco.
     """
@@ -43,18 +59,73 @@ def listar_robots_bd():
     """
     Busca os dados e converte de volta para objetos Robot.
     """
+    try:
+        conexao = sqlite3.connect('gestao_robots.db')
+        cursor = conexao.cursor()
+        
+        cursor.execute("SELECT * FROM robots") # [cite: 21] Funcionalidade de Listar
+        linhas = cursor.fetchall()
+        
+        lista_de_objetos = []
+        for linha in linhas:
+            # Reconstrói o objeto Robot a partir dos dados do banco
+            novo_robot = Robot(*linha)
+            lista_de_objetos.append(novo_robot)
+            
+        return lista_de_objetos
+    except sqlite3.Error as e:
+        print(f"Erro ao listar robots: {e}")
+        return []
+    finally:
+        if conexao:
+            conexao.close()
+
+
+def adicionar_tarefa_bd(tarefa):
+    """
+    Recebe um objeto da classe Tarefa e salva no banco.
+    """
+    
     conexao = sqlite3.connect('gestao_robots.db')
     cursor = conexao.cursor()
     
-    cursor.execute("SELECT * FROM robots") # [cite: 21] Funcionalidade de Listar
-    linhas = cursor.fetchall()
-    conexao.close()
+    cursor.execute("""
+        INSERT INTO tarefas (tipo_limpeza, area, estado, id_robot, inicio, fim)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (tarefa.tipo_limpeza, tarefa.area, tarefa.estado, 
+          tarefa.id_robot, tarefa.inicio, tarefa.fim))
     
-    lista_de_objetos = []
-    for linha in linhas:
-        # Reconstrói o objeto Robot a partir dos dados do banco
-        # A ordem das colunas no banco deve corresponder à ordem dos argumentos no construtor
-        novo_robot = Robot(*linha)
-        lista_de_objetos.append(novo_robot)
+    print(f"Robot: {cursor.lastrowid} adicionado com sucesso!")
+
+    conexao.commit()
+    conexao.close()
+
+def listar_tarefas_bd():
+    """
+    Busca os dados e converte de volta para objetos Tarefa.
+    """
+    try:
+        conexao = sqlite3.connect('gestao_robots.db')
+        cursor = conexao.cursor()
         
-    return lista_de_objetos
+        cursor.execute("SELECT * FROM tarefas") 
+        linhas = cursor.fetchall()
+        
+        lista_de_objetos = []
+        for linha in linhas:
+            # Reconstrói o objeto Tarefa a partir dos dados do banco
+            # linha = (id_tarefa, tipo_limpeza, area, estado, id_robot, inicio, fim)
+            nova_tarefa = Tarefa(linha[0], linha[1], linha[2], linha[3])
+            nova_tarefa.id_robot = linha[4]
+            nova_tarefa.inicio = linha[5]
+            nova_tarefa.fim = linha[6]
+            lista_de_objetos.append(nova_tarefa)
+            
+        return lista_de_objetos
+    
+    except sqlite3.Error as e:
+        print(f"Erro ao listar tarefas: {e}")
+        return []
+    finally:
+        if conexao:
+            conexao.close()
