@@ -36,6 +36,9 @@ def inicializar_bd():
         if conexao:
             conexao.close()
 
+
+
+
 def adicionar_robot_bd(robot):
     """
     Recebe um objeto da classe Robot e salva no banco.
@@ -79,7 +82,39 @@ def listar_robots_bd():
     finally:
         if conexao:
             conexao.close()
+            
+def remover_robot_db(id_robot):
+    """"
+    Remover robot da base de dados por parâmetro id
+    """
+    try:
+        conexao = sqlite3.connect('gestao_robots.db')
+        cursor = conexao.cursor()
+        
+        # verificar se existe robot com esse id
+        cursor.execute("SELECT id_robot FROM robots WHERE id_robot = ?", (id_robot,))
+        linha = cursor.fetchone()
 
+        if linha is None:
+            print("Não há robots com esse id")
+            return False
+        
+        # existe, então remover
+        cursor.execute("DELETE FROM robots WHERE id_robot = ?", (id_robot,))
+        conexao.commit()
+        
+        print(f"Robot {id_robot} removido com sucesso!")
+        return True
+        
+    except sqlite3.Error as e:
+        print(f"Erro ao remover robot: {e}")
+        return False
+    finally:
+        if conexao:
+            conexao.close()
+
+
+# -------- TAREFAS -------- 
 
 def adicionar_tarefa_bd(tarefa):
     """

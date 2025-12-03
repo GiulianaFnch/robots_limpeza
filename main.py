@@ -65,6 +65,10 @@ def main():
             if robots:
                 for robot in robots:
                     print(robot)
+                id_robot_remover = input("Qual robot deseja remover? Pressione 0 pra n remover ") # mudar de lugar -> opção "remover robot"
+                
+                if id_robot_remover!=0:
+                    db.remover_robot_db(id_robot_remover)
             else:
                 print("Nenhum robot encontrado na frota.")
             input("\nPressione ENTER para continuar...")
