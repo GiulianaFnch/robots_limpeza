@@ -27,6 +27,10 @@ def exibir_menu():
     print("8. Gerar Mapa de Eficiência")    # [cite: 25]
     print("9. Relatório de Alertas")        # [cite: 26]
     print("10. Limpar tela")   
+
+    print("\n--- MANUTENÇÃO ---")
+    print("11. Excluir Robot")
+    print("12. Excluir Tarefa")
     
     print("\n0. Sair")
     print("="*40)
@@ -82,6 +86,24 @@ def main():
 
         elif opcao == '10':
             limpar_tela()
+
+        elif opcao == '11':  # ← NOVA: Excluir Robot
+            print("\n  EXCLUIR ROBOT")
+            print(">> Lista de Robots da Frota")
+            # Aqui chamaremos: db.listar_robots()
+            robot_id = input("ID do Robot a excluir: ")
+            # Aqui chamaremos: db.excluir_robot(robot_id)
+            print(f"Robot {robot_id} removido da frota!")
+            input("Pressione ENTER para continuar...")
+
+        elif opcao == '12':  # ← NOVA: Excluir Tarefa
+            print("\n  EXCLUIR TAREFA")
+            print(">> Lista de Tarefas")
+            # Aqui chamaremos: db.listar_tarefas()
+            tarefa_id = input("ID da Tarefa a excluir: ")
+            # Aqui chamaremos: db.excluir_tarefa(tarefa_id)
+            print(f"Tarefa {tarefa_id} removida!")
+            input("Pressione ENTER para continuar...")    
             
         else:
             print("Opção inválida! Tente novamente.")
