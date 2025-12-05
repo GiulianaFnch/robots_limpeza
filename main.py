@@ -88,11 +88,15 @@ def main():
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '5':
-            print("\n>> Atribuir Tarefa")
-            # Esta será a parte complexa - AQUI
-            # 1. Listar robots disponiveis
-            # 2. Listar tarefas pendentes
-            # 3. Pedir IDs e validar
+            print("\n>> Iniciar Tarefa")
+            # 1. Nova 2. Existente
+            # Salva ID tarefa
+            # Lista robots disponíveis pra aquela tarefa
+            # Seleciona robot
+            # Simulação
+            # Confirmação
+            
+            
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '6':
