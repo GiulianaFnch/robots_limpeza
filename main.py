@@ -89,13 +89,25 @@ def main():
 
         elif opcao == '5':
             print("\n>> Iniciar Tarefa")
+            # Escolhe:
             # 1. Nova 2. Existente
             # Salva ID tarefa
-            # Lista robots disponíveis pra aquela tarefa
-            # Seleciona robot
-            # Simulação
-            # Confirmação
             
+            # Lista robots disponíveis pra aquela tarefa
+            # Seleciona robot 
+            
+            # Simulação -> imprementar depois
+            # Confirmação (y/n)
+            
+            # if tarefa_objeto.atribuir_robot(id_robot) = true: -> vai verificar se self.estado != "Pendente"
+            # se true, atribui o id do robot ao objeto tarefa com sucesso
+            # db.atribuir_tarefa_bd(id_robot, id_tarefa)  -> só depois de tudo verificado, vai atualizar na base de dados
+            
+            # print ("Sucesso! Robot {id_robot} está a trabalhar...")
+            
+            # podemos fazer por exemplo:
+            # input("Pressione 0 para sair ou 1 para monitorar estado do robot: ")
+            # se 1, vai mostrar o robot em progresso na tarefa, com os níveis de bateria diminuindo, etc
             
             input("\nPressione ENTER para continuar...")
 
