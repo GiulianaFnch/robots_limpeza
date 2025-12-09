@@ -1,7 +1,9 @@
 # Arquivo: database.py
 import sqlite3
+from datetime import datetime
 from models.robot import Robot 
 from models.tarefa import Tarefa
+
 
 def inicializar_bd():
     try:    
@@ -164,3 +166,39 @@ def listar_tarefas_bd():
     finally:
         if conexao:
             conexao.close()
+            
+            
+
+def atribuir_tarefa_robot(id_robot, id_tarefa):
+    """
+    Vincula um robot a uma tarefa pré-selecionados e atualiza os status de ambos.
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    try:
+        # 1. Atualizar o ROBOT (Muda estado e define tarefa atual)
+        cursor.execute("""
+            UPDATE robots 
+            SET estado = 'A Limpar', tarefa_atual = ?
+            WHERE id_robot = ?
+        """, (id_tarefa, id_robot))
+        
+        # 2. Atualizar a TAREFA (Muda estado, define robot e hora de inicio)
+        hora_inicio = datetime.now()
+        cursor.execute("""
+            UPDATE tarefas
+            SET estado = 'Em Progresso', id_robot = ?, inicio = ?
+            WHERE id_tarefa = ?
+        """, (id_robot, hora_inicio, id_tarefa))
+        
+        conexao.commit()
+        print(f"Sucesso! Tarefa {id_tarefa} atribuída ao Robot {id_robot}.")
+        return True
+        
+    except sqlite3.Error as e:
+        print(f"Erro na atribuição: {e}")
+        conexao.rollback() # Desfaz mudanças se algo der errado a meio
+        return False
+    finally:
+        conexao.close()

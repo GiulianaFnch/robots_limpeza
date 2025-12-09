@@ -65,9 +65,9 @@ def main():
 
         elif opcao == '3':
             print("\n>> Lista de Robots da Frota")
-            robots = db.listar_robots_bd()
-            if robots:
-                for robot in robots:
+            lista_robots = db.listar_robots_bd()
+            if lista_robots:
+                for robot in lista_robots:
                     print(robot)
                 id_robot_remover = int(input("Qual robot deseja remover? Pressione 0 pra n remover ")) # mudar de lugar -> opção "remover robot"
                 
@@ -89,25 +89,21 @@ def main():
 
         elif opcao == '5':
             print("\n>> Iniciar Tarefa")
-            # Escolhe:
-            # 1. Nova 2. Existente
-            # Salva ID tarefa
-            
-            # Lista robots disponíveis pra aquela tarefa
+            # Lista robots disponíveis pra aquela tarefa onde robot.pode_trabalhar() == true
             # Seleciona robot 
             
             # Simulação -> imprementar depois
             # Confirmação (y/n)
             
-            # if tarefa_objeto.atribuir_robot(id_robot) = true: -> vai verificar se self.estado != "Pendente"
+            # if tarefa_objeto.atribuir_robot(id_robot) == true: -> vai verificar se self.estado != "Pendente"
             # se true, atribui o id do robot ao objeto tarefa com sucesso
-            # db.atribuir_tarefa_bd(id_robot, id_tarefa)  -> só depois de tudo verificado, vai atualizar na base de dados
+            # db.atribuir_tarefa_robot(id_robot, id_tarefa)  -> só depois de tudo verificado, vai atualizar na base de dados
             
             # print ("Sucesso! Robot {id_robot} está a trabalhar...")
             
             # podemos fazer por exemplo:
             # input("Pressione 0 para sair ou 1 para monitorar estado do robot: ")
-            # se 1, vai mostrar o robot em progresso na tarefa, com os níveis de bateria diminuindo, etc
+            # se 1, vai mostrar o robot em progresso na tarefa,
             
             input("\nPressione ENTER para continuar...")
 
@@ -124,16 +120,25 @@ def main():
         elif opcao == '10':
             limpar_tela()
 
-        elif opcao == '11':  # ← NOVA: Excluir Robot
+        elif opcao == '11':  #  Excluir Robot
             print("\n  EXCLUIR ROBOT")
             print(">> Lista de Robots da Frota")
-            # Aqui chamaremos: db.listar_robots()
-            robot_id = input("ID do Robot a excluir: ")
-            # Aqui chamaremos: db.excluir_robot(robot_id)
-            print(f"Robot {robot_id} removido da frota!")
-            input("Pressione ENTER para continuar...")
+            lista_robots = db.listar_robots_bd()
+            if lista_robots:
+                for robot in lista_robots:
+                    print(robot)
+                id_robot_remover = int(input("Qual robot deseja remover? Pressione 0 pra n remover ")) 
+                # aqui depois teremos que fazer a verificação se pode mesmo excluir esse robot 
+                # if tarefa_atual == null
+                
+                if id_robot_remover!=0 and db.remover_robot_db(id_robot_remover):
+                    print(f"Robot {id_robot_remover} removido da frota!") # só vai mostrar se der certo
+            else:
+                print("Nenhum robot encontrado na frota.")
+            input("\nPressione ENTER para continuar...")
 
-        elif opcao == '12':  # ← NOVA: Excluir Tarefa
+
+        elif opcao == '12':  # ← NOVA: Excluir Tarefa -> ajustar ficar com a mesma lógica do excluir robot
             print("\n  EXCLUIR TAREFA")
             print(">> Lista de Tarefas")
             # Aqui chamaremos: db.listar_tarefas()
