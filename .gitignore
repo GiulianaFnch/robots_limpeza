@@ -1,0 +1,19 @@
+# --- Python (Global - cobre todas as pastas, inclusive 'models') ---
+__pycache__/
+*.pyc
+
+# --- VS Code (Editor) ---
+.vscode/
+
+# --- Mac OS (Lixo de sistema) ---
+.DS_Store
+
+# --- Windows (Lixo de sistema) ---
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Ambientes Virtuais ---
+venv/
+env/
+.env

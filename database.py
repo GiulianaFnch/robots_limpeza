@@ -8,9 +8,10 @@ import config
 
 
 def inicializar_bd():
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
     try:    
-        conexao = sqlite3.connect('gestao_robots.db')
-        cursor = conexao.cursor()
         cursor.executescript('''
             CREATE TABLE IF NOT EXISTS robots (
                 id_robot INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,26 +60,37 @@ def adicionar_robot_bd(robot):
     conexao = sqlite3.connect('gestao_robots.db')
     cursor = conexao.cursor()
     
-    # [cite: 14] Funcionalidade de Adicionar
-    cursor.execute("""
-        INSERT INTO robots (modelo, estado, bateria, deposito, localizacao, tarefa_atual)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (robot.modelo, robot.estado, robot.bateria, 
-          robot.deposito, robot.localizacao, robot.tarefa_atual))
-    
-    print(f"Robot: {cursor.lastrowid} adicionado com sucesso!")
+    try:
+        # [cite: 14] Funcionalidade de Adicionar
+        cursor.execute("""
+            INSERT INTO robots (modelo, estado, bateria, deposito, localizacao, tarefa_atual)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (robot.modelo, robot.estado, robot.bateria, 
+            robot.deposito, robot.localizacao, robot.tarefa_atual))
+        
+        conexao.commit()
+        print(f"Robot: {cursor.lastrowid} adicionado com sucesso!")
 
-    conexao.commit()
-    conexao.close()
+    except sqlite3.Error as e:
+        print(f"Erro ao adicionar tarefa: {e}")
+        # Desfazer alterações em caso de erro
+        try:
+            conexao.rollback()
+        except Exception:
+            pass
+        return False
+    finally:
+        if conexao:
+            conexao.close()
 
 def listar_robots_bd():
     """
     Busca os dados e converte de volta para objetos Robot.
     """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
     try:
-        conexao = sqlite3.connect('gestao_robots.db')
-        cursor = conexao.cursor()
-        
         cursor.execute("SELECT * FROM robots") # [cite: 21] Funcionalidade de Listar
         linhas = cursor.fetchall()
         
@@ -100,10 +112,10 @@ def remover_robot_db(id_robot):
     """"
     Remover robot da base de dados por parâmetro id
     """
-    try:
-        conexao = sqlite3.connect('gestao_robots.db')
-        cursor = conexao.cursor()
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
         
+    try:
         # verificar se existe robot com esse id
         cursor.execute("SELECT id_robot FROM robots WHERE id_robot = ?", (id_robot,))
         linha = cursor.fetchone()
@@ -133,40 +145,52 @@ def adicionar_tarefa_bd(tarefa):
     """
     Recebe um objeto da classe Tarefa e salva no banco.
     """
-    
     conexao = sqlite3.connect('gestao_robots.db')
     cursor = conexao.cursor()
     
-    cursor.execute("""
-        INSERT INTO tarefas (tipo_limpeza, area, estado, id_robot, inicio, fim)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (tarefa.tipo_limpeza, tarefa.area, tarefa.estado, 
-          tarefa.id_robot, tarefa.inicio, tarefa.fim))
-    
-    print(f"Robot: {cursor.lastrowid} adicionado com sucesso!")
+    try:
+        cursor.execute("""
+            INSERT INTO tarefas (tipo_limpeza, area, progresso, estado, id_robot, inicio, fim)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (tarefa.tipo_limpeza, tarefa.area, 0, tarefa.estado, 
+                tarefa.id_robot, tarefa.inicio, tarefa.fim))
 
-    conexao.commit()
-    conexao.close()
+        # Garantir persistência da inserção
+        conexao.commit()
+        print(f"Tarefa: {cursor.lastrowid} adicionada com sucesso!")
+        return True
+
+    except sqlite3.Error as e:
+        print(f"Erro ao adicionar tarefa: {e}")
+        # Desfazer alterações em caso de erro
+        try:
+            conexao.rollback()
+        except Exception:
+            pass
+        return False
+    finally:
+        if conexao:
+            conexao.close()
 
 def listar_tarefas_bd():
     """
     Busca os dados e converte de volta para objetos Tarefa.
     """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
     try:
-        conexao = sqlite3.connect('gestao_robots.db')
-        cursor = conexao.cursor()
-        
         cursor.execute("SELECT * FROM tarefas") 
         linhas = cursor.fetchall()
         
         lista_de_objetos = []
         for linha in linhas:
             # Reconstrói o objeto Tarefa a partir dos dados do banco
-            # linha = (id_tarefa, tipo_limpeza, area, estado, id_robot, inicio, fim)
-            nova_tarefa = Tarefa(linha[0], linha[1], linha[2], linha[3])
-            nova_tarefa.id_robot = linha[4]
-            nova_tarefa.inicio = linha[5]
-            nova_tarefa.fim = linha[6]
+            # linha = (id_tarefa, tipo_limpeza, area, progresso, estado, id_robot, inicio, fim)
+            nova_tarefa = Tarefa(linha[0], linha[1], linha[2], linha[4])
+            nova_tarefa.id_robot = linha[5]
+            nova_tarefa.inicio = linha[6]
+            nova_tarefa.fim = linha[7]
             lista_de_objetos.append(nova_tarefa)
             
         return lista_de_objetos
@@ -178,10 +202,29 @@ def listar_tarefas_bd():
         if conexao:
             conexao.close()
             
+def remover_tarefa_bd(id_tarefa):
+    """
+    Remove tarefa na base de dados por parametro id
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM tarefas WHERE id_tarefa = ?", (id_tarefa,))
+        if cursor.rowcount > 0:
+            print(f"Tarefa {id_tarefa} removida.")
+            conexao.commit()
+        else:
+            print("Tarefa não encontrada.")
+    except Exception as e:
+        print("Erro:", e)
+    finally:
+        conexao.close()
+            
             
 # -------- OPERAÇÕES --------         
 
-def atribuir_tarefa_robot(id_robot, id_tarefa):
+def atribuir_tarefa_bd(id_robot, id_tarefa):
     """
     Vincula um robot a uma tarefa pré-selecionados e atualiza os status de ambos.
     """
@@ -235,8 +278,6 @@ def executar_simulacao_passo():
             
             if dados_tarefa:
                 tipo, nome_area, progresso_atual = dados_tarefa
-                
-                # --- LÓGICA 100% BASEADA NO CONFIG ---
                 
                 # 1. Pegar tamanho da área (se não existir, usa 20 como padrão)
                 tamanho_area = config.AREAS_EMPRESA.get(nome_area, 20)
@@ -305,7 +346,7 @@ def executar_simulacao_passo():
                     cursor.execute("UPDATE robots SET bateria = ?, deposito = ? WHERE id_robot = ?", (nova_bat, novo_lixo, r_id))
                     # Atualiza progresso da tarefa
                     cursor.execute("UPDATE tarefas SET progresso = ? WHERE id_tarefa = ?", (novo_progresso, r_tarefa_id))
-                    mensagens.append(f"Robot {r_id} a trabalhar... Progresso: {novo_progresso:.1f}% | Bat: {nova_bat}% | Lixo: {novo_lixo}%)")
+                    mensagens.append(f"Robot {r_id} a trabalhar tarefa {r_tarefa_id} Progresso: {novo_progresso:.1f}% | Bat: {nova_bat}% | Lixo: {novo_lixo}%)")
                     pass
                     
         conexao.commit()

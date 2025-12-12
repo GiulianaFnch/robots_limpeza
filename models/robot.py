@@ -12,7 +12,7 @@ class Robot:
     def __str__(self):      
         #Representação em texto do robot (util para o print).
 
-        return f"[Robot {self.id_robot}] {self.modelo} - Bat: {self.bateria}% - Status: {self.estado}"
+        return f"[Robot {self.id_robot}] {self.modelo} - Bat: {self.bateria}% | Lixo: {self.deposito}% - Estado: {self.estado}"
     
     def pode_trabalhar(self):       
         #Verifica se o robot tem bateria e escpaço no deposito (Retorna True ou False).
