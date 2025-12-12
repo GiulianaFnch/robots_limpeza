@@ -19,7 +19,7 @@ def exibir_menu():
     print("4. Listar Todas as Tarefas") # [cite: 22]
     
     print("\n--- OPERAÇÕES ---")
-    print("5. Atribuir Tarefa a um Robot")  # [cite: 16]
+    print("5. Iniciar Tarefa")  # [cite: 16]
     print("6. Executar Simulação (Passo de Tempo)") # [cite: 5, 49]
     print("7. Concluir/Cancelar Tarefa")    # [cite: 20]
     
@@ -89,7 +89,12 @@ def main():
 
         elif opcao == '5':
             print("\n>> Iniciar Tarefa")
-            # Lista robots disponíveis pra aquela tarefa onde robot.pode_trabalhar() == true
+            # lista tarefas pendentes
+            
+            # Lista robots disponíveis onde: 
+            #  robot.pode_trabalhar() == true
+            #  tipo limpeza bate com o modelo do robot (aspiração - aspirador)
+            
             # Seleciona robot 
             
             # Simulação -> imprementar depois

@@ -1,4 +1,4 @@
-# --- Python (Global - cobre todas as pastas, inclusive 'models') ---
+# --- Python (Global) ---
 __pycache__/
 *.pyc
 
