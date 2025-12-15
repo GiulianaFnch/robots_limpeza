@@ -43,14 +43,60 @@ def main():
         opcao = input("Escolha uma opção: ")
 
         if opcao == '1':
-            # Lógica para adicionar robot
             print("\n>> Adicionar Novo Robot")
-            modelo = "Aspirador" #  aqui temos que alterar pra ser input() do usuário (ele vai escrever o modelo e localização)
-            localizacao = "Sala"
 
-            robot = Robot(None, modelo, localizacao)
+            # Escolha do modelo
+            modelos = {
+                '1': 'Aspirador',
+                '2': 'Lavador de Chão',
+                '3': 'Híbrido'
+            }
+
+            print("Escolha o modelo do robot:")
+            for k, v in modelos.items():
+                print(f"{k}. {v}")
+
+            modelo_escolhido = None
+            while modelo_escolhido is None:
+                opc_modelo = input("Opção de modelo: ")
+                if opc_modelo in modelos:
+                    modelo_escolhido = modelos[opc_modelo]
+                else:
+                    print("Opção inválida. Tente novamente.")
+
+            # Escolha da localização
+            locais = {
+                '1': 'Receção',
+                '2': 'Escritório A',
+                '3': 'Escritório B',
+                '4': 'Sala de Reuniões',
+                '5': 'Armazém'
+            }
+
+            print("\nEscolha a localização inicial do robot:")
+            for k, v in locais.items():
+                print(f"{k}. {v}")
+
+            local_escolhido = None
+            while local_escolhido is None:
+                opc_local = input("Opção de localização: ")
+                if opc_local in locais:
+                    local_escolhido = locais[opc_local]
+                else:
+                    print("Opção inválida. Tente novamente.")
+
+            # Criação do robot com valores padrão
+            robot = Robot(
+                id_robot=None,
+                modelo=modelo_escolhido,
+                estado="Estacionado",
+                bateria=100,
+                deposito=0,
+                localizacao=local_escolhido,
+                tarefa_atual=None
+            )
+
             db.adicionar_robot_bd(robot)
-            
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '2':
@@ -65,14 +111,10 @@ def main():
 
         elif opcao == '3':
             print("\n>> Lista de Robots da Frota")
-            lista_robots = db.listar_robots_bd()
-            if lista_robots:
-                for robot in lista_robots:
+            robots = db.listar_robots_bd()
+            if robots:
+                for robot in robots:
                     print(robot)
-                id_robot_remover = int(input("Qual robot deseja remover? Pressione 0 pra n remover ")) # mudar de lugar -> opção "remover robot"
-                
-                if id_robot_remover!=0:
-                    db.remover_robot_db(id_robot_remover)
             else:
                 print("Nenhum robot encontrado na frota.")
             input("\nPressione ENTER para continuar...")
@@ -125,35 +167,59 @@ def main():
         elif opcao == '10':
             limpar_tela()
 
-        elif opcao == '11':  #  Excluir Robot
-            print("\n  EXCLUIR ROBOT")
-            print(">> Lista de Robots da Frota")
-            lista_robots = db.listar_robots_bd()
-            if lista_robots:
-                for robot in lista_robots:
-                    print(robot)
-                id_robot_remover = int(input("Qual robot deseja remover? Pressione 0 pra n remover ")) 
-                # aqui depois teremos que fazer a verificação se pode mesmo excluir esse robot 
-                # if tarefa_atual == null
-                
-                if id_robot_remover!=0 and db.remover_robot_db(id_robot_remover):
-                    print(f"Robot {id_robot_remover} removido da frota!") # só vai mostrar se der certo
-            else:
+        elif opcao == '11':  # EXCLUIR ROBOT
+            print("\n>> EXCLUIR ROBOT")
+            robots = db.listar_robots_bd()
+            if not robots:
                 print("Nenhum robot encontrado na frota.")
-            input("\nPressione ENTER para continuar...")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            print("Lista de Robots da Frota:")
+            for robot in robots:
+                print(robot)
+
+            print("\nDigite 0 para cancelar.")
+            try:
+                id_robot = int(input("ID do Robot a excluir: "))
+            except ValueError:
+                print("ID inválido.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            if id_robot == 0:
+                print("Operação cancelada.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            db.remover_robot_db(id_robot)
+            input("Pressione ENTER para continuar...")
 
 
-        elif opcao == '12':  # ← NOVA: Excluir Tarefa -> ajustar ficar com a mesma lógica do excluir robot
-            print("\n  EXCLUIR TAREFA")
-            print(">> Lista de Tarefas")
-            # Aqui chamaremos: db.listar_tarefas()
-            tarefa_id = input("ID da Tarefa a excluir: ")
-            # Aqui chamaremos: db.excluir_tarefa(tarefa_id)
-            print(f"Tarefa {tarefa_id} removida!")
-            input("Pressione ENTER para continuar...")    
-            
-        else:
-            print("Opção inválida! Tente novamente.")
+        elif opcao == '12':  # EXCLUIR TAREFA
+            print("\n>> EXCLUIR TAREFA")
+            tarefas = db.listar_tarefas_bd()
+            if not tarefas:
+                print("Nenhuma tarefa encontrada.")
+                input("Pressione ENTER para continuar...")
+                continue
 
-if __name__ == "__main__":
-    main()
+            print("Lista de Tarefas:")
+            for tarefa in tarefas:
+                print(tarefa)
+
+            print("\nDigite 0 para cancelar.")
+            try:
+                id_tarefa = int(input("ID da Tarefa a excluir: "))
+            except ValueError:
+                print("ID inválido.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            if id_tarefa == 0:
+                print("Operação cancelada.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            db.remover_tarefa_bd(id_tarefa)
+            input("Pressione ENTER para continuar...")
