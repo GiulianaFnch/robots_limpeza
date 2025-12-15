@@ -100,12 +100,55 @@ def main():
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '2':
-            # Lógica para criar tarefa
             print("\n>> Nova Tarefa de Limpeza")
-            tipo = input("Tipo (Aspiração/Lavagem): ")
-            area = input("Nome da Área: ")
-            
-            tarefa = Tarefa(None, tipo, area)
+
+            # Escolha do tipo de limpeza (ligado aos modelos de robot do enunciado)
+            tipos_limpeza = {
+                '1': 'Aspiração',
+                '2': 'Lavagem'
+            }
+
+            print("Escolha o tipo de limpeza:")
+            for k, v in tipos_limpeza.items():
+                print(f"{k}. {v}")
+
+            tipo_escolhido = None
+            while tipo_escolhido is None:
+                opc_tipo = input("Opção de tipo de limpeza: ")
+                if opc_tipo in tipos_limpeza:
+                    tipo_escolhido = tipos_limpeza[opc_tipo]
+                else:
+                    print("Opção inválida. Tente novamente.")
+
+            # Escolha da área / divisão (mesmos locais da opção 1, para ficar coerente)
+            areas = {
+                '1': 'Receção',
+                '2': 'Escritório A',
+                '3': 'Escritório B',
+                '4': 'Sala de Reuniões',
+                '5': 'Armazém'
+            }
+
+            print("\nEscolha a área/divisão a ser limpa:")
+            for k, v in areas.items():
+                print(f"{k}. {v}")
+
+            area_escolhida = None
+            while area_escolhida is None:
+                opc_area = input("Opção de área/divisão: ")
+                if opc_area in areas:
+                    area_escolhida = areas[opc_area]
+                else:
+                    print("Opção inválida. Tente novamente.")
+
+            # Criação da tarefa com estado padrão "Pendente"
+            tarefa = Tarefa(
+                id_tarefa=None,
+                tipo_limpeza=tipo_escolhido,
+                area=area_escolhida,
+                estado="Pendente"
+            )
+
             db.adicionar_tarefa_bd(tarefa)
             input("\nPressione ENTER para continuar...")
 
@@ -132,33 +175,95 @@ def main():
         elif opcao == '5':
             print("\n>> Iniciar Tarefa")
             # lista tarefas pendentes
-            
-            # Lista robots disponíveis onde: 
-            #  robot.pode_trabalhar() == true
-            #  tipo limpeza bate com o modelo do robot (aspiração - aspirador)
-            
-            # Seleciona robot 
+            tarefas = db.listar_tarefas_bd()
+            tarefas_pendentes = [t for t in tarefas if t.estado == "Pendente"]
+
+            if not tarefas_pendentes:
+                print("Nenhuma tarefa pendente disponível.")
+                input("\nPressione ENTER para continuar...")
+                continue
+            else:
+                print("Tarefas Pendentes:")
+                for tarefa in tarefas_pendentes:
+                    print("ID:", tarefa.id_tarefa, "| Tipo:", tarefa.tipo_limpeza, "| Área:", tarefa.area, "| Estado:", tarefa.estado)
+                try:
+                    id_tarefa = int(input("ID da Tarefa a iniciar: "))
+                    # Seleciona tarefa
+                    tarefa_objeto = next((t for t in tarefas_pendentes if t.id_tarefa == id_tarefa), None)
+                    
+                    if tarefa_objeto:
+                        # filtramos robots baseados nessa tarefa
+                        robots_compativeis = []
+
+                        for robot in db.listar_robots_bd():
+                            # primeir regra: estado e bateria
+                            basico_ok = robot.estado == "Estacionado" and robot.pode_trabalhar()
+                            
+                            #segunda regra: localização
+                            local_ok = robot.localizacao == tarefa_objeto.area
+
+                            # terceira regra: tipo limpeza e modelo
+                            if tarefa_objeto.tipo_limpeza == "Aspiração":
+                                tipo_ok = robot.modelo in ["Aspirador", "Híbrido"]
+                            elif tarefa_objeto.tipo_limpeza == "Lavagem":
+                                tipo_ok = robot.modelo in ["Lavador de Chão", "Híbrido"]
+                            else:
+                                tipo_ok = False
+
+                            if basico_ok and local_ok and tipo_ok:
+                                robots_compativeis.append(robot)
+
+                        # mostrar os robots compatíveis
+                        if not robots_compativeis:
+                            print("Nenhum robot compatível disponível para esta tarefa.")
+                            input("\nPressione ENTER para continuar...")
+                            continue
+                        else:
+                            print("Robots Compatíveis para a Tarefa:")
+                            for robot in robots_compativeis:
+                                print("ID:", robot.id_robot, "| Modelo:", robot.modelo, "| Bateria:", robot.bateria, "| Depósito:", robot.deposito, "| Localização:", robot.localizacao)
+                            try:
+                                id_robot = int(input("ID do Robot a atribuir à tarefa: "))
+                            except ValueError:
+                                print("ID inválido.")
+                                input("\nPressione ENTER para continuar...")
+                                continue
+                            robot_selecionado = next((r for r in robots_compativeis if r.id_robot == id_robot), None)
+                            if not robot_selecionado:
+                                print("Robot inválido ou não compatível.")
+                                input("\nPressione ENTER para continuar...")
+                                continue
+                        # atribuir tarefa ao robot
+                        if tarefa_objeto.atribuir_robot(id_robot):
+                            db.atribuir_tarefa_bd(id_robot, id_tarefa)
+                            print(f"Sucesso! Robot {id_robot} está a trabalhar na tarefa {id_tarefa}...")
+                        else:
+                            print("Falha ao atribuir tarefa. Verifique o estado da tarefa.")
+                    else:
+                        print("Tarefa inválida.")
+                except ValueError:
+                    print("ID inválido.")
             
             # Simulação -> imprementar depois
+
             # Confirmação (y/n)
-            
-            # if tarefa_objeto.atribuir_robot(id_robot) == true: -> vai verificar se self.estado != "Pendente"
-            # se true, atribui o id do robot ao objeto tarefa com sucesso
-            # db.atribuir_tarefa_robot(id_robot, id_tarefa)  -> só depois de tudo verificado, vai atualizar na base de dados
-            
-            # print ("Sucesso! Robot {id_robot} está a trabalhar...")
-            
-            # podemos fazer por exemplo:
-            # input("Pressione 0 para sair ou 1 para monitorar estado do robot: ")
-            # se 1, vai mostrar o robot em progresso na tarefa,
             
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '6':
-            print("\n>> Simulando funcionamento do sistema...")
-            # Aqui chamaremos a função de simulação que desconta bateria
-            print("... Baterias atualizadas e depósitos a encher ...")
+            print("\n>> Simulando funcionamento do sistema...\n")
+
+            mensagens = db.executar_simulacao_passo()
+
+            if mensagens:
+                for msg in mensagens:
+                    print(msg)
+            else:
+                print("Nenhum robot está a limpar neste momento.")
+
+            print("\n... Baterias atualizadas e depósitos a encher ...")
             input("\nPressione ENTER para continuar...")
+
 
         elif opcao == '0':
             print("A encerrar sistema...")
