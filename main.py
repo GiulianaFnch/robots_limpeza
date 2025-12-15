@@ -223,3 +223,12 @@ def main():
 
             db.remover_tarefa_bd(id_tarefa)
             input("Pressione ENTER para continuar...")
+            
+        elif opcao == '0':
+            print("A encerrar sistema...")
+            break
+            
+
+            
+if __name__ == "__main__":
+    main()
