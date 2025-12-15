@@ -1,6 +1,8 @@
 # Arquivo: main.py
 import sys
+import time
 import database as db  
+import config
 from models.robot import Robot
 from models.tarefa import Tarefa
 
@@ -65,13 +67,8 @@ def main():
                     print("Opção inválida. Tente novamente.")
 
             # Escolha da localização
-            locais = {
-                '1': 'Receção',
-                '2': 'Escritório A',
-                '3': 'Escritório B',
-                '4': 'Sala de Reuniões',
-                '5': 'Armazém'
-            }
+            # Carrega as áreas disponíveis do config
+            locais = {str(i+1): a for i, a in enumerate(config.AREAS_EMPRESA.keys())}
 
             print("\nEscolha a localização inicial do robot:")
             for k, v in locais.items():
@@ -103,10 +100,8 @@ def main():
             print("\n>> Nova Tarefa de Limpeza")
 
             # Escolha do tipo de limpeza (ligado aos modelos de robot do enunciado)
-            tipos_limpeza = {
-                '1': 'Aspiração',
-                '2': 'Lavagem'
-            }
+            # Carrega os perfis de limpeza do config
+            tipos_limpeza = {str(i+1): p for i, p in enumerate(config.PERFIL_LIMPEZA.keys())}
 
             print("Escolha o tipo de limpeza:")
             for k, v in tipos_limpeza.items():
@@ -120,14 +115,8 @@ def main():
                 else:
                     print("Opção inválida. Tente novamente.")
 
-            # Escolha da área / divisão (mesmos locais da opção 1, para ficar coerente)
-            areas = {
-                '1': 'Receção',
-                '2': 'Escritório A',
-                '3': 'Escritório B',
-                '4': 'Sala de Reuniões',
-                '5': 'Armazém'
-            }
+            # Reutiliza as áreas do config para escolher a área da tarefa
+            areas = {str(i+1): a for i, a in enumerate(config.AREAS_EMPRESA.keys())}
 
             print("\nEscolha a área/divisão a ser limpa:")
             for k, v in areas.items():
@@ -251,18 +240,45 @@ def main():
             input("\nPressione ENTER para continuar...")
 
         elif opcao == '6':
-            print("\n>> Simulando funcionamento do sistema...\n")
-
-            mensagens = db.executar_simulacao_passo()
-
-            if mensagens:
-                for msg in mensagens:
+            print("\n>> SIMULAÇÃO DO SISTEMA")
+            print("1. Avançar 10 minutos (Manual)")
+            print("2. Modo Automático (Contínuo)")
+            
+            escolha_sim = input("Escolha: ")
+            
+            if escolha_sim == '1':
+                # MODO MANUAL (O que você já tinha)
+                print("Processando...")
+                logs = db.executar_simulacao_passo() # Chama a função que criamos antes
+                for msg in logs:
                     print(msg)
-            else:
-                print("Nenhum robot está a limpar neste momento.")
-
-            print("\n... Baterias atualizadas e depósitos a encher ...")
-            input("\nPressione ENTER para continuar...")
+                input("Pressione ENTER para continuar...")
+                
+            elif escolha_sim == '2':
+                # MODO AUTOMÁTICO
+                print("\n--- INICIANDO MODO AUTOMÁTICO ---")
+                print("O sistema vai avançar 10 min a cada segundo.")
+                print("Pressione CTRL+C para parar a simulação.\n")
+                
+                try:
+                    ciclos = 0
+                    while True:
+                        ciclos += 1
+                        # 1. Executa a lógica
+                        logs = db.executar_simulacao_passo()
+                        
+                        # 2. Mostra o resultado
+                        print(f"\n[Ciclo {ciclos} | +{ciclos*10} mins]")
+                        for msg in logs:
+                            print(msg)
+                            
+                        # 3. Espera um pouco (ex: 1.5 segundos) antes do próximo
+                        time.sleep(1.5) 
+                        
+                except KeyboardInterrupt:
+                    # Isto captura quando você aperta Ctrl+C no terminal
+                    print("\n\n>> Simulação interrompida pelo utilizador.")
+                    input("Pressione ENTER para voltar ao menu...")
 
 
         elif opcao == '0':
