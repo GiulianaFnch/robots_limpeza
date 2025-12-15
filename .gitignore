@@ -17,3 +17,4 @@ $RECYCLE.BIN/
 venv/
 env/
 .env
+gestao_robots.db

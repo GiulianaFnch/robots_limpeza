@@ -1,4 +1,7 @@
 #criando a classe 
+import config
+
+
 class Robot:
     def __init__(self, id_robot, modelo, estado = "Estacionado",bateria = 100, deposito = 0, localizacao = "Base", tarefa_atual = None ):
         self.id_robot = id_robot       #Identificador único.
@@ -15,10 +18,14 @@ class Robot:
         return f"[Robot {self.id_robot}] {self.modelo} - Bat: {self.bateria}% | Lixo: {self.deposito}% - Estado: {self.estado}"
     
     def pode_trabalhar(self):       
-        #Verifica se o robot tem bateria e escpaço no deposito (Retorna True ou False).
+        # Verifica se o robot tem bateria e espaço no depósito usando limites do config.
 
-        bateria_ok = self.bateria > 20
-        deposito_ok = self.deposito < 80
+        # Bateria acima do limite crítico definido no config
+        bateria_ok = self.bateria > config.LIMITE_BATERIA_CRITICO
+
+        # Depósito abaixo do limite cheio definido no config
+        deposito_ok = self.deposito < config.LIMITE_DEPOSITO_CHEIO
+
         avaria = self.estado == "Com Avaria"
         return bateria_ok and deposito_ok and not avaria
     
