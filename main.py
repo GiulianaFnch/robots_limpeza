@@ -11,6 +11,7 @@ def limpar_tela():
     print("\n" * 50)
 
 def exibir_menu():
+    print("\n" * 10)
     print("="*40)
     print("   SISTEMA DE GESTÃO DE ROBOTS - ISLA")
     print("="*40)
@@ -176,7 +177,7 @@ def main():
                 for tarefa in tarefas_pendentes:
                     print("ID:", tarefa.id_tarefa, "| Tipo:", tarefa.tipo_limpeza, "| Área:", tarefa.area, "| Estado:", tarefa.estado)
                 try:
-                    id_tarefa = int(input("ID da Tarefa a iniciar: "))
+                    id_tarefa = int(input("\nID da Tarefa a iniciar: "))
                     # Seleciona tarefa
                     tarefa_objeto = next((t for t in tarefas_pendentes if t.id_tarefa == id_tarefa), None)
                     
@@ -208,7 +209,7 @@ def main():
                             input("\nPressione ENTER para continuar...")
                             continue
                         else:
-                            print("Robots Compatíveis para a Tarefa:")
+                            print("\nRobots Compatíveis para a Tarefa:")
                             for robot in robots_compativeis:
                                 print("ID:", robot.id_robot, "| Modelo:", robot.modelo, "| Bateria:", robot.bateria, "| Depósito:", robot.deposito, "| Localização:", robot.localizacao)
                             try:
@@ -250,8 +251,11 @@ def main():
                 # MODO MANUAL (O que você já tinha)
                 print("Processando...")
                 logs = db.executar_simulacao_passo() # Chama a função que criamos antes
-                for msg in logs:
-                    print(msg)
+                if logs:
+                    for msg in logs:
+                        print(msg)
+                else:
+                    print("Não há robots a trabalhar")
                 input("Pressione ENTER para continuar...")
                 
             elif escolha_sim == '2':
@@ -264,14 +268,17 @@ def main():
                     ciclos = 0
                     while True:
                         ciclos += 1
-                        # 1. Executa a lógica
                         logs = db.executar_simulacao_passo()
                         
                         # 2. Mostra o resultado
                         print(f"\n[Ciclo {ciclos} | +{ciclos*10} mins]")
-                        for msg in logs:
-                            print(msg)
-                            
+                        if logs: 
+                            for msg in logs:
+                                print(msg)
+                        else: # se não tiver mensagem para logo
+                            print("Nenhum robot a trabalhar. Encerrando simulação...")
+                            break
+                        
                         # 3. Espera um pouco (ex: 1.5 segundos) antes do próximo
                         time.sleep(1.5) 
                         
@@ -280,10 +287,13 @@ def main():
                     print("\n\n>> Simulação interrompida pelo utilizador.")
                     input("Pressione ENTER para voltar ao menu...")
 
+            elif opcao == '0':
+                print("A encerrar sistema...")
+                break
 
-        elif opcao == '0':
-            print("A encerrar sistema...")
-            break
+        elif opcao == '9':
+            print("\n>> Mapa de Alertas")
+            db.gerar_mapa_alertas()
 
         elif opcao == '10':
             limpar_tela()

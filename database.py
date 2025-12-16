@@ -362,4 +362,24 @@ def executar_simulacao_passo():
         
 def gerar_mapa_alertas(data_inicio=None, data_fim=None):
     
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    try:
+        cursor.execute("SELECT * FROM historico_alertas")
+        linhas = cursor.fetchall()
+        
+        if linhas:
+            for linha in linhas:
+                print(linha)
+        else:
+            print("Não há histórico de alertas")
+            
+    except sqlite3.Error as e:
+        print(f"Erro : {e}")
+        return []
+    finally:
+        if conexao:
+            conexao.close()
+    
     return 

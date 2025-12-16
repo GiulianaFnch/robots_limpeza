@@ -15,7 +15,7 @@ class Robot:
     def __str__(self):      
         #Representação em texto do robot (util para o print).
 
-        return f"[Robot {self.id_robot}] {self.modelo} - Bat: {self.bateria}% | Lixo: {self.deposito}% - Estado: {self.estado}"
+        return f"[Robot {self.id_robot}] {self.modelo} - Localização: {self.localizacao} - Bat: {self.bateria}% | Lixo: {self.deposito}% - Estado: {self.estado} - Tarefa Atual: {self.tarefa_atual}"
     
     def pode_trabalhar(self):       
         # Verifica se o robot tem bateria e espaço no depósito usando limites do config.
