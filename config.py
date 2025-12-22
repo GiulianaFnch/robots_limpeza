@@ -10,7 +10,7 @@ AREAS_EMPRESA = {
 }
 
 # --- PARÂMETROS DE CONSUMO E VELOCIDADE ---
-# Aqui definimos quanto cada tipo de tarefa gasta por "passo" (ex: 10 min)
+# Quanto cada tipo de tarefa gasta por passo (10 min)
 PERFIL_LIMPEZA = {
     "Lavagem": {
         "consumo_bateria": 8,   # %
@@ -27,3 +27,8 @@ PERFIL_LIMPEZA = {
 # --- LIMITES DO SISTEMA ---
 LIMITE_BATERIA_CRITICO = 20
 LIMITE_DEPOSITO_CHEIO = 100
+
+# --- RECUPERAÇÃO ---
+# Quanto recupera por cada passo de simulação 
+TAXA_CARREGAMENTO = 15      # Ganha 15% de bateria
+TAXA_ESVAZIAMENTO = 50      # Esvazia 50% do depósito

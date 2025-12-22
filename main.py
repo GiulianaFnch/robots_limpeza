@@ -27,7 +27,7 @@ def exibir_menu():
     print("7. Concluir/Cancelar Tarefa")    # [cite: 20]
     
     print("\n--- RELATÓRIOS E MAPAS ---")
-    print("8. Gerar Mapa de Eficiência")    # [cite: 25]
+    print("8. Gerar Mapas")    # [cite: 25]
     print("9. Relatório de Alertas")        # [cite: 26]
     print("10. Limpar tela")   
 
@@ -318,6 +318,57 @@ def main():
             db.cancelar_tarefa_bd(id_tarefa)
             input("Pressione ENTER para continuar...")
             
+        elif opcao == '8':
+            
+            print("\n>> GERAR MAPAS")
+            print("Escolha o mapa a ser gerado:\n")
+            print("1. Horas de trabalho por robot")
+            print("2. Áreas mais limpas")
+            print("3. Eficiência")
+            
+            sub_opcao = input("Escolha: ")
+            
+            if sub_opcao == '1':
+                print("\n>> MAPA DE HORAS DE TRABALHO")
+                print("Pressione ENTER sem digitar nada para ver o TOTAL HISTÓRICO.")
+                print("Ou insira datas (YYYY-MM-DD) para filtrar.")
+                
+                d_inicio = input("\nData Início: ")
+                d_fim = input("Data Fim:    ")
+                
+                # Tratamento: Se vazio, passa None para a função
+                param_inicio = d_inicio if d_inicio.strip() != "" else None
+                param_fim = d_fim if d_fim.strip() != "" else None
+                
+                # Chama a função inteligente
+                dados = db.gerar_mapa_horas_trabalho(param_inicio, param_fim)
+                
+                titulo = f"RELATÓRIO: {'Intervalo ' + d_inicio + ' a ' + d_fim if param_inicio else 'HISTÓRICO TOTAL'}"
+                print(f"\n{titulo}")
+                print(f"{'RANK':<5} | {'ROBOT':<25} | {'TAREFAS':<10} | {'HORAS TOTAIS'}")
+                print("-" * 65)
+                
+                if not dados:
+                    print("Nenhum registo de trabalho encontrado.")
+                else:
+                    for i, linha in enumerate(dados): 
+                        r_id, r_mod, horas, qtd = linha
+                        
+                        # Proteção caso horas venha None (se não houver tarefas)
+                        if horas is None: horas = 0
+                        
+                        print(f"{i+1:<5} | {f'{r_mod} ({r_id})':<25} | {qtd:<10} | {horas:.2f} h")
+                            
+                input("\nPressione ENTER para continuar...")
+                
+                
+            elif sub_opcao == '2':
+                print("Áreas mais limpas")
+                
+            elif sub_opcao == '3':
+                print("Eficiência")
+            else:
+                print("Opção inválida. Tente novamente.")
             
         elif opcao == '9':
             print("\n>> RELATÓRIO DE ALERTAS")
@@ -350,15 +401,13 @@ def main():
 
         elif opcao == '11':  # EXCLUIR ROBOT
             print("\n>> EXCLUIR ROBOT")
+            print("\n>> Lista de Robots da Frota")
             robots = db.listar_robots_bd()
-            if not robots:
+            if robots:
+                for robot in robots:
+                    print(robot)
+            else:
                 print("Nenhum robot encontrado na frota.")
-                input("Pressione ENTER para continuar...")
-                continue
-
-            print("Lista de Robots da Frota:")
-            for robot in robots:
-                print(robot)
 
             print("\nDigite 0 para cancelar.")
             try:

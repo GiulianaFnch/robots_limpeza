@@ -320,6 +320,8 @@ def executar_simulacao_passo():
     mensagens = []
     
     try:
+        # PARTE 1: ROBOTS A TRABALHAR (Consomem Bateria / Enchem Lixo)
+        
         cursor.execute("SELECT * FROM robots WHERE estado = 'A Limpar'")
         robots = cursor.fetchall()
         
@@ -334,31 +336,19 @@ def executar_simulacao_passo():
             if dados_tarefa:
                 tipo, nome_area, progresso_atual = dados_tarefa
                 
-                # 1. Pegar tamanho da área (se não existir, usa 20 como padrão)
+                # --- Lógica de Consumo ---
                 tamanho_area = config.AREAS_EMPRESA.get(nome_area, 20)
+                perfil = config.PERFIL_LIMPEZA.get(tipo, {"consumo_bateria": 5, "encher_lixo": 5, "velocidade": 5})
                 
-                # 2. Pegar perfil de consumo baseado no tipo (Aspiração/Lavagem)
-                # Se o tipo não existir no config, usa valores padrão
-                perfil = config.PERFIL_LIMPEZA.get(tipo, {
-                    "consumo_bateria": 5, "encher_lixo": 5, "velocidade": 5
-                })
-                
-                # 3. Aplicar os valores do config
                 nova_bat = r_bat - perfil["consumo_bateria"]
                 novo_lixo = r_lixo + perfil["encher_lixo"]
-                
                 avance_percentual = (perfil["velocidade"] / tamanho_area) * 100
                 novo_progresso = progresso_atual + avance_percentual
                 
-                # Caso A: Bateria/Lixo Crítico - Problema
+                # Caso A: Bateria/Lixo Crítico - Problema -> VAI PARA A BASE
                 if nova_bat <= config.LIMITE_BATERIA_CRITICO or novo_lixo >= config.LIMITE_DEPOSITO_CHEIO:
-                    tipo_problema = ""
                     
-                    if nova_bat <= config.LIMITE_BATERIA_CRITICO:
-                        tipo_problema = "Bateria Fraca"
-                    else:
-                        tipo_problema = "Depósito Cheio"
-                    
+                    tipo_problema = "Bateria Fraca" if nova_bat <= config.LIMITE_BATERIA_CRITICO else "Depósito Cheio"
                     agora = datetime.now()
                     msg_erro = f"O robot parou a tarefa {r_tarefa_id} por {tipo_problema}."
                     
@@ -368,9 +358,9 @@ def executar_simulacao_passo():
                     """, (r_id, tipo_problema, agora, msg_erro)) # para usar no relatório 
 
                     cursor.execute("UPDATE tarefas SET estado = 'Falhada', id_robot = NULL WHERE id_tarefa = ?", (r_tarefa_id,))
-                    cursor.execute("UPDATE robots SET estado = ?, tarefa_atual = NULL WHERE id_robot = ?", (tipo_problema, r_id))
-                    
-                    mensagens.append(f"ALERTA GRAVADO: Robot {r_id} - {tipo_problema}")
+                    cursor.execute("UPDATE robots SET estado = 'A Carregar', tarefa_atual = NULL WHERE id_robot = ?", (r_id,))  
+                                      
+                    mensagens.append(f"ALERTA: Robot {r_id} regressou à base por: {tipo_problema}. Iniciando recarga...")
                     pass 
 
                 # Caso B: Terminou
@@ -403,8 +393,33 @@ def executar_simulacao_passo():
                     cursor.execute("UPDATE tarefas SET progresso = ? WHERE id_tarefa = ?", (novo_progresso, r_tarefa_id))
                     mensagens.append(f"Robot {r_id} a trabalhar tarefa {r_tarefa_id} Progresso: {novo_progresso:.1f}% | Bat: {nova_bat}% | Lixo: {novo_lixo}%)")
                     pass
-                    
+                
+        # PARTE 2: ROBOTS NA BASE (Recuperam Bateria / Esvaziam Lixo)
+        
+        cursor.execute("SELECT * FROM robots WHERE estado = 'A Carregar'")
+        robots_carregando = cursor.fetchall()
+        
+        for robot in robots_carregando:
+            r_id, r_modelo, r_estado, r_bat, r_lixo, r_loc, r_tarefa_id = robot
+            
+            nova_bat = r_bat + config.TAXA_CARREGAMENTO
+            novo_lixo = r_lixo - config.TAXA_ESVAZIAMENTO
+            
+            # Limites (Não passar de 100 nem ser menor que 0)
+            if nova_bat > 100: nova_bat = 100
+            if novo_lixo < 0: novo_lixo = 0
+            
+            # Se já está 100% pronto, volta a estar disponivel ('Estacionado')
+            if nova_bat == 100 and novo_lixo == 0:
+                cursor.execute("UPDATE robots SET estado = 'Estacionado', bateria = ?, deposito = ? WHERE id_robot = ?", (nova_bat, novo_lixo, r_id))
+                mensagens.append(f"MANUTENÇÃO: Robot {r_id} está 100% carregado e pronto a usar!")
+            else:
+                # Continua a carregar
+                cursor.execute("UPDATE robots SET bateria = ?, deposito = ? WHERE id_robot = ?", (nova_bat, novo_lixo, r_id))
+                mensagens.append(f"Robot {r_id} na base a carregar... (Bat: {nova_bat}% | Lixo: {novo_lixo}%)")
+
         conexao.commit()
+            
         return mensagens
 
     except Exception as e:
@@ -424,22 +439,108 @@ def gerar_mapa_alertas(data_inicio=None, data_fim=None):
     cursor = conexao.cursor()
 
     try:
+        sql_base = """
+            SELECT id, id_robot, tipo_alerta, data_hora, mensagem
+            FROM historico_alertas
+        """
         if data_inicio and data_fim:
-            cursor.execute("""
-                SELECT id, id_robot, tipo_alerta, data_hora, mensagem
-                FROM historico_alertas
-                WHERE data_hora BETWEEN ? AND ?
-                ORDER BY data_hora DESC
-            """, (data_inicio, data_fim))
+            sql_base += " WHERE data_hora BETWEEN ? AND ?"
+            params = (data_inicio, data_fim)
         else:
-            cursor.execute("""
-                SELECT id, id_robot, tipo_alerta, data_hora, mensagem
-                FROM historico_alertas
-                ORDER BY data_hora DESC
-            """)
+            params = ()
+            
+        # 1. Agrupa visualmente por Robot (id_robot ASC)
+        # 2. Dentro de cada robot, mostra o mais recente primeiro (data_hora DESC)
+        sql_base += " ORDER BY id_robot ASC, data_hora DESC"
+
+        cursor.execute(sql_base, params)
         return cursor.fetchall()
+        
     except sqlite3.Error as e:
         print(f"Erro ao gerar mapa de alertas: {e}")
+        return []
+    finally:
+        conexao.close()
+        
+def gerar_mapa_areas_frequentes():
+    return
+
+# No database.py
+
+def gerar_mapa_horas_trabalho(data_inicio=None, data_fim=None):
+    """
+    Calcula horas SIMULADAS baseadas no tamanho da área e velocidade do robot.
+    Retorna lista: [(id_robot, modelo, total_horas_simuladas, qtd_tarefas), ...]
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    try:
+        # 1. Buscamos os dados BRUTOS das tarefas concluídas
+        # Não somamos nada no SQL, trazemos tudo para calcular no Python
+        query = """
+            SELECT r.id_robot, r.modelo, t.tipo_limpeza, t.area
+            FROM robots r
+            JOIN tarefas t ON r.id_robot = t.id_robot
+            WHERE t.estado = 'Concluida'
+        """
+        
+        params = []
+        if data_inicio and data_fim:
+            query += " AND t.inicio >= ? AND t.inicio <= ?"
+            params.append(f"{data_inicio} 00:00:00")
+            params.append(f"{data_fim} 23:59:59")
+            
+        cursor.execute(query, params)
+        linhas = cursor.fetchall()
+        
+        # 2. Processamento Matemático (Agrupamento Manual)
+        # Estrutura: { id_robot: {'modelo': 'X', 'horas': 0.0, 'qtd': 0} }
+        relatorio = {}
+        
+        for linha in linhas:
+            r_id, r_modelo, t_tipo, t_area = linha
+            
+            # --- O CÁLCULO DE TEMPO SIMULADO ---
+            # A. Tamanho da Área (m²)
+            tamanho = config.AREAS_EMPRESA.get(t_area, 20) # 20 é padrão se não achar
+            
+            # B. Velocidade (m² por passo)
+            perfil = config.PERFIL_LIMPEZA.get(t_tipo, {"velocidade": 5})
+            velocidade = perfil["velocidade"]
+            
+            # C. Quantos passos (de 10 min) demorou?
+            passos = tamanho / velocidade
+            
+            # D. Total em Horas (Passos * 10 min / 60 min)
+            horas_tarefa = (passos * 10) / 60
+            # -----------------------------------
+            
+            # Adicionar ao dicionário acumulador
+            if r_id not in relatorio:
+                relatorio[r_id] = {'modelo': r_modelo, 'horas': 0.0, 'qtd': 0}
+            
+            relatorio[r_id]['horas'] += horas_tarefa
+            relatorio[r_id]['qtd'] += 1
+            
+        # 3. Converter dicionário para lista ordenada (para o main.py ler igual antes)
+        # Formato final: (id, modelo, horas, qtd)
+        resultados_finais = []
+        for r_id, dados in relatorio.items():
+            resultados_finais.append((
+                r_id, 
+                dados['modelo'], 
+                dados['horas'], 
+                dados['qtd']
+            ))
+            
+        # Ordenar quem trabalhou mais (horas descrescente)
+        resultados_finais.sort(key=lambda x: x[2], reverse=True)
+        
+        return resultados_finais
+        
+    except sqlite3.Error as e:
+        print(f"Erro ao calcular horas simuladas: {e}")
         return []
     finally:
         conexao.close()
