@@ -220,6 +220,61 @@ def remover_tarefa_bd(id_tarefa):
         print("Erro:", e)
     finally:
         conexao.close()
+        
+        
+def cancelar_tarefa_bd(id_tarefa):
+    """
+    Cancela uma tarefa e liberta o robot associado (se existir).
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+
+    try:
+        # buscar tarefa
+        cursor.execute("""
+            SELECT id_robot, estado
+            FROM tarefas
+            WHERE id_tarefa = ?
+        """, (id_tarefa,))
+        linha = cursor.fetchone()
+
+        if linha is None:
+            print("Tarefa não encontrada.")
+            return False
+
+        id_robot, estado_atual = linha
+
+        # só faz sentido cancelar se não estiver já concluída/falhada/cancelada
+        if estado_atual in ("Concluida", "Falhada", "Cancelada"):
+            print(f"Não é possível cancelar uma tarefa com estado '{estado_atual}'.")
+            return False
+
+        # 1) atualizar tarefa -> Cancelada
+        cursor.execute("""
+            UPDATE tarefas
+            SET estado = 'Cancelada'
+            WHERE id_tarefa = ?
+        """, (id_tarefa,))
+
+        # 2) se tiver robot ligado, libertar robot
+        if id_robot is not None:
+            cursor.execute("""
+                UPDATE robots
+                SET estado = 'Estacionado', tarefa_atual = NULL
+                WHERE id_robot = ?
+            """, (id_robot,))
+
+        conexao.commit()
+        print(f"Tarefa {id_tarefa} cancelada com sucesso.")
+        return True
+
+    except sqlite3.Error as e:
+        print(f"Erro ao cancelar tarefa: {e}")
+        conexao.rollback()
+        return False
+    finally:
+        conexao.close()
+
             
             
 # -------- OPERAÇÕES --------         
@@ -361,25 +416,30 @@ def executar_simulacao_passo():
 # -------- RELATÓRIOS --------         
         
 def gerar_mapa_alertas(data_inicio=None, data_fim=None):
-    
+    """
+    Devolve uma lista de alertas (id, id_robot, tipo, data_hora, mensagem),
+    opcionalmente filtrada por intervalo de datas.
+    """
     conexao = sqlite3.connect('gestao_robots.db')
     cursor = conexao.cursor()
-    
+
     try:
-        cursor.execute("SELECT * FROM historico_alertas")
-        linhas = cursor.fetchall()
-        
-        if linhas:
-            for linha in linhas:
-                print(linha)
+        if data_inicio and data_fim:
+            cursor.execute("""
+                SELECT id, id_robot, tipo_alerta, data_hora, mensagem
+                FROM historico_alertas
+                WHERE data_hora BETWEEN ? AND ?
+                ORDER BY data_hora DESC
+            """, (data_inicio, data_fim))
         else:
-            print("Não há histórico de alertas")
-            
+            cursor.execute("""
+                SELECT id, id_robot, tipo_alerta, data_hora, mensagem
+                FROM historico_alertas
+                ORDER BY data_hora DESC
+            """)
+        return cursor.fetchall()
     except sqlite3.Error as e:
-        print(f"Erro : {e}")
+        print(f"Erro ao gerar mapa de alertas: {e}")
         return []
     finally:
-        if conexao:
-            conexao.close()
-    
-    return 
+        conexao.close()

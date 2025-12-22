@@ -291,9 +291,59 @@ def main():
                 print("A encerrar sistema...")
                 break
 
+        elif opcao == '7':
+            print("\n>> CONCLUIR / CANCELAR TAREFA")
+            tarefas = db.listar_tarefas_bd()
+
+            if not tarefas:
+                print("Nenhuma tarefa encontrada.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            for t in tarefas:
+                print(t)
+
+            try:
+                id_tarefa = int(input("ID da tarefa a cancelar (0 para voltar): "))
+            except ValueError:
+                print("ID inválido.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            if id_tarefa == 0:
+                print("Operação cancelada.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            db.cancelar_tarefa_bd(id_tarefa)
+            input("Pressione ENTER para continuar...")
+            
+            
         elif opcao == '9':
-            print("\n>> Mapa de Alertas")
-            db.gerar_mapa_alertas()
+            print("\n>> RELATÓRIO DE ALERTAS")
+
+            # por enquanto, sem filtro de datas (pode adicionar depois)
+            alertas = db.gerar_mapa_alertas()
+
+            if not alertas:
+                print("Nenhum alerta registado.")
+                input("Pressione ENTER para continuar...")
+                continue
+
+            # Cabeçalho
+            print("-" * 110)
+            print(f"{'ID':<4} {'Robot':<6} {'Tipo':<20} {'Data/Hora':<25} Mensagem")
+            print("-" * 110)
+
+            for id_alerta, id_robot, tipo, data_hora, mensagem in alertas:
+                data_base = str(data_hora).split(".")[0]   # tira milésimos
+                data_sem_seg = data_base[:-3]              # tira os segundos -> "YYYY-MM-DD HH:MM"
+                print(f"{id_alerta:<4} {str(id_robot):<6} {tipo:<20} {data_sem_seg:<25} {mensagem}")
+
+
+
+            print("-" * 110)
+            input("Pressione ENTER para continuar...")
 
         elif opcao == '10':
             limpar_tela()
