@@ -343,9 +343,9 @@ def main():
                 # Chama a função inteligente
                 dados = db.gerar_mapa_horas_trabalho(param_inicio, param_fim)
                 
-                titulo = f"RELATÓRIO: {'Intervalo ' + d_inicio + ' a ' + d_fim if param_inicio else 'HISTÓRICO TOTAL'}"
+                titulo = f"\n -- RELATÓRIO: {'Intervalo ' + d_inicio + ' a ' + d_fim + ' --'if param_inicio else 'HISTÓRICO TOTAL --'}"
                 print(f"\n{titulo}")
-                print(f"{'RANK':<5} | {'ROBOT':<25} | {'TAREFAS':<10} | {'HORAS TOTAIS'}")
+                print(f"{'\nRANK':<5} | {'ROBOT':<25} | {'TAREFAS':<10} | {'HORAS TOTAIS'}")
                 print("-" * 65)
                 
                 if not dados:
@@ -363,15 +363,56 @@ def main():
                 
                 
             elif sub_opcao == '2':
-                print("Áreas mais limpas")
+                print("\n -- ÁREAS MAIS LIMPAS --")
+                dados = db.gerar_mapa_areas_frequentes()
+                
+                if not dados:
+                    print("Sem dados suficientes.")
+                else:
+                    print(f"\n{'RANK':<5} | {'ÁREA/DIVISÃO':<20} | {'LIMPEZAS'}")
+                    print("-" * 45)
+                    for i, linha in enumerate(dados):
+                        area, qtd = linha
+                        print(f"{i+1:<5} | {area:<20} | {qtd}")
+                
+                input("\nPressione ENTER para continuar...")
+                
                 
             elif sub_opcao == '3':
-                print("Eficiência")
+                print("\n -- MAPAS DE EFICIÊNCIA (Tempo Médio) --")
+                
+                lista_modelos, lista_areas = db.gerar_estatisticas_eficiencia()
+                
+                # --- TABELA 1: POR MODELO ---
+                print("\n1. Tempo Médio por TIPO DE ROBOT")
+                if not lista_modelos:
+                    print(" (Sem dados suficientes)")
+                else:
+                    print(f"{'MODELO':<20} | {'TAREFAS':<10} | {'TEMPO MÉDIO (min)'}")
+                    print("-" * 60)
+                    for linha in lista_modelos:
+                        mod, qtd, media = linha
+                        # Se for muito rápido, mostra segundos também, senão só minutos
+                        print(f"{mod:<20} | {qtd:<10} | {media:.2f} min")
+
+                # --- TABELA 2: POR ÁREA ---
+                print("\n2. Tempo Médio por ÁREA")
+                if not lista_areas:
+                    print(" (Sem dados suficientes)")
+                else:
+                    print(f"{'ÁREA':<20} | {'TAREFAS':<10} | {'TEMPO MÉDIO (min)'}")
+                    print("-" * 60)
+                    for linha in lista_areas:
+                        area, qtd, media = linha
+                        print(f"{area:<20} | {qtd:<10} | {media:.2f} min")
+                        
+                input("\nPressione ENTER para continuar...")
+                
             else:
                 print("Opção inválida. Tente novamente.")
             
         elif opcao == '9':
-            print("\n>> RELATÓRIO DE ALERTAS")
+            print("\n -- RELATÓRIO DE ALERTAS --")
 
             # por enquanto, sem filtro de datas (pode adicionar depois)
             alertas = db.gerar_mapa_alertas()
@@ -382,16 +423,13 @@ def main():
                 continue
 
             # Cabeçalho
-            print("-" * 110)
-            print(f"{'ID':<4} {'Robot':<6} {'Tipo':<20} {'Data/Hora':<25} Mensagem")
+            print(f"{'\nID':<4}| {'Robot':<6}| {'Tipo':<18}| {'Data/Hora':<25}| Mensagem")
             print("-" * 110)
 
             for id_alerta, id_robot, tipo, data_hora, mensagem in alertas:
                 data_base = str(data_hora).split(".")[0]   # tira milésimos
                 data_sem_seg = data_base[:-3]              # tira os segundos -> "YYYY-MM-DD HH:MM"
                 print(f"{id_alerta:<4} {str(id_robot):<6} {tipo:<20} {data_sem_seg:<25} {mensagem}")
-
-
 
             print("-" * 110)
             input("Pressione ENTER para continuar...")

@@ -345,23 +345,43 @@ def executar_simulacao_passo():
                 avance_percentual = (perfil["velocidade"] / tamanho_area) * 100
                 novo_progresso = progresso_atual + avance_percentual
                 
-                # Caso A: Bateria/Lixo Crítico - Problema -> VAI PARA A BASE
+                # Caso A: Bateria/Lixo Crítico -> VAI PARA A BASE
                 if nova_bat <= config.LIMITE_BATERIA_CRITICO or novo_lixo >= config.LIMITE_DEPOSITO_CHEIO:
                     
                     tipo_problema = "Bateria Fraca" if nova_bat <= config.LIMITE_BATERIA_CRITICO else "Depósito Cheio"
                     agora = datetime.now()
                     msg_erro = f"O robot parou a tarefa {r_tarefa_id} por {tipo_problema}."
                     
+                    # 1. Regista o Alerta
                     cursor.execute("""
                         INSERT INTO historico_alertas (id_robot, tipo_alerta, data_hora, mensagem)
                         VALUES (?, ?, ?, ?)
-                    """, (r_id, tipo_problema, agora, msg_erro)) # para usar no relatório 
+                    """, (r_id, tipo_problema, agora, msg_erro))
+                    
+                    # 2. VERIFICAÇÃO DE AVARIA 
+                    # Conta quantos alertas este robot já teve na vida
+                    cursor.execute("SELECT COUNT(*) FROM historico_alertas WHERE id_robot = ?", (r_id,))
+                    total_alertas = cursor.fetchone()[0]
+                    
+                    novo_estado = 'A Carregar' # O padrão é ir carregar
+                    msg_extra = "Iniciando recarga..."
+                    
+                    # Se ultrapassou o limite, muda para 'Com Avaria'
+                    if total_alertas >= config.LIMITE_ALERTAS_PARA_AVARIA:
+                        novo_estado = 'Com Avaria'
+                        msg_extra = "CRÍTICO: Limite de alertas excedido. Robot avariou e precisa de técnico!"
+                    
+                        cursor.execute("""
+                            INSERT INTO historico_alertas (id_robot, tipo_alerta, data_hora, mensagem)
+                            VALUES (?, ?, ?, ?)
+                        """, (r_id, "AVARIA TOTAL", agora, "O robot avariou por excesso de desgaste."))
 
-                    cursor.execute("UPDATE tarefas SET estado = 'Falhada', id_robot = NULL WHERE id_tarefa = ?", (r_tarefa_id,))
-                    cursor.execute("UPDATE robots SET estado = 'A Carregar', tarefa_atual = NULL WHERE id_robot = ?", (r_id,))  
-                                      
-                    mensagens.append(f"ALERTA: Robot {r_id} regressou à base por: {tipo_problema}. Iniciando recarga...")
-                    pass 
+                    # 3. Atualiza o Robot (ou vai carregar, ou avaria de vez)
+                    cursor.execute("UPDATE tasks SET estado = 'Falhada', id_robot = NULL WHERE id_tarefa = ?", (r_tarefa_id,))
+                    cursor.execute("UPDATE robots SET estado = ?, tarefa_atual = NULL WHERE id_robot = ?", (novo_estado, r_id))
+                    
+                    mensagens.append(f"ALERTA: Robot {r_id} parou ({tipo_problema}). {msg_extra}")
+                    pass
 
                 # Caso B: Terminou
                 elif novo_progresso >= 100:
@@ -461,11 +481,81 @@ def gerar_mapa_alertas(data_inicio=None, data_fim=None):
         return []
     finally:
         conexao.close()
-        
-def gerar_mapa_areas_frequentes():
-    return
 
-# No database.py
+def gerar_mapa_areas_frequentes():
+    """
+    Retorna uma lista de áreas ordenadas pela frequência de limpeza.
+    Output: [('Receção', 5), ('Cozinha', 2), ...]
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    try:
+        # Agrupa por área e conta quantas tarefas CONCLUÍDAS existem em cada uma
+        cursor.execute("""
+            SELECT area, COUNT(*) as qtd
+            FROM tarefas
+            WHERE estado = 'Concluida'
+            GROUP BY area
+            ORDER BY qtd DESC
+        """)
+        return cursor.fetchall()
+        
+    except sqlite3.Error as e:
+        print(f"Erro no mapa de áreas: {e}")
+        return []
+    finally:
+        conexao.close()
+
+
+def gerar_estatisticas_eficiencia():
+    """
+    Retorna dois conjuntos de dados:
+    1. Eficiência por Modelo (Tempo médio por tipo de robot)
+    2. Eficiência por Área (Tempo médio por divisão)
+    """
+    conexao = sqlite3.connect('gestao_robots.db')
+    cursor = conexao.cursor()
+    
+    dados_modelo = []
+    dados_area = []
+    
+    try:
+        # 1. Média por MODELO DE ROBOT
+        cursor.execute("""
+            SELECT 
+                r.modelo, 
+                COUNT(*) as qtd_tarefas,
+                AVG((julianday(t.fim) - julianday(t.inicio)) * 1440) as media_minutos
+            FROM robots r
+            JOIN tarefas t ON r.id_robot = t.id_robot
+            WHERE t.estado = 'Concluida'
+            GROUP BY r.modelo
+            ORDER BY media_minutos ASC
+        """)
+        dados_modelo = cursor.fetchall()
+
+        # 2. Média por ÁREA
+        cursor.execute("""
+            SELECT 
+                t.area, 
+                COUNT(*) as qtd_tarefas,
+                AVG((julianday(t.fim) - julianday(t.inicio)) * 1440) as media_minutos
+            FROM tarefas t
+            WHERE t.estado = 'Concluida'
+            GROUP BY t.area
+            ORDER BY media_minutos DESC
+        """)
+        dados_area = cursor.fetchall()
+        
+        return dados_modelo, dados_area
+
+    except sqlite3.Error as e:
+        print(f"Erro estatísticas: {e}")
+        return [], []
+    finally:
+        conexao.close()
+
 
 def gerar_mapa_horas_trabalho(data_inicio=None, data_fim=None):
     """

@@ -32,3 +32,7 @@ LIMITE_DEPOSITO_CHEIO = 100
 # Quanto recupera por cada passo de simulação 
 TAXA_CARREGAMENTO = 15      # Ganha 15% de bateria
 TAXA_ESVAZIAMENTO = 50      # Esvazia 50% do depósito
+
+# --- AVARIAS E MANUTENÇÃO ---
+# Se o robot atingir este número total de alertas no histórico, ele avaria.
+LIMITE_ALERTAS_PARA_AVARIA = 5  # Ex: Ao 5º erro, o robot quebra.
