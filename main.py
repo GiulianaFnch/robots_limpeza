@@ -412,23 +412,36 @@ def main():
                 print("Opção inválida. Tente novamente.")
             
         elif opcao == '9':
-            print("\n -- RELATÓRIO DE ALERTAS --")
+            print("\n>> RELATÓRIO DE ALERTAS")
 
-            # por enquanto, sem filtro de datas (pode adicionar depois)
-            alertas = db.gerar_mapa_alertas()
+            print("1. Ver todos os alertas")
+            print("2. Filtrar por intervalo de datas (YYYY-MM-DD)")
+            escolha = input("Escolha uma opção: ")
+
+            data_inicio = None
+            data_fim = None
+
+            if escolha == '2':
+                data_inicio = input("Data de início (YYYY-MM-DD): ").strip()
+                data_fim = input("Data de fim    (YYYY-MM-DD): ").strip()
+
+            # Busca os alertas (com ou sem filtro)
+            alertas = db.gerar_mapa_alertas(data_inicio, data_fim)
 
             if not alertas:
-                print("Nenhum alerta registado.")
+                print("Nenhum alerta registado para o critério escolhido.")
                 input("Pressione ENTER para continuar...")
                 continue
 
-            # Cabeçalho
-            print(f"{'\nID':<4}| {'Robot':<6}| {'Tipo':<18}| {'Data/Hora':<25}| Mensagem")
+            # Cabeçalho formatado
+            print("-" * 110)
+            print(f"{'ID':<4} {'Robot':<6} {'Tipo':<20} {'Data/Hora':<25} Mensagem")
             print("-" * 110)
 
             for id_alerta, id_robot, tipo, data_hora, mensagem in alertas:
-                data_base = str(data_hora).split(".")[0]   # tira milésimos
-                data_sem_seg = data_base[:-3]              # tira os segundos -> "YYYY-MM-DD HH:MM"
+                # data_hora vem como string tipo "2025-12-22 16:25:54.344613"
+                data_base = str(data_hora).split(".")[0]   # "2025-12-22 16:25:54"
+                data_sem_seg = data_base[:-3]              # "2025-12-22 16:25"
                 print(f"{id_alerta:<4} {str(id_robot):<6} {tipo:<20} {data_sem_seg:<25} {mensagem}")
 
             print("-" * 110)
