@@ -74,3 +74,13 @@ TAXA_ESVAZIAMENTO = 50      # Esvazia 50% do depósito
 # --- TOLERÂNCIA A FALHAS ---
 # Se o robot atingir este número total de alertas no histórico, ele avaria permanentemente.
 LIMITE_ALERTAS_PARA_AVARIA = 5
+```
+## Tecnologias Utilizadas
+Linguagem: Python 3
+
+Base de Dados: SQLite3
+
+Paradigma: Programação Orientada a Objetos (POO) e Estruturada.
+
+## Autores
+Projeto desenvolvido por Giuliana Finochio e Pedro Costa para o ISLA Gaia.
