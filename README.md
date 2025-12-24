@@ -2,6 +2,8 @@
 
 Este projeto é uma aplicação em **Python** desenvolvida no âmbito da cadeira de **Fundamentos de Programação no ISLA Gaia**. O sistema permite gerir uma frota de robots de limpeza, atribuir tarefas em diferentes áreas de uma empresa e simular a execução dessas limpezas com gestão de recursos (bateria e depósito).
 
+![Print screen do menu principal do projeto](/assets/images/print.png)
+
 ## Funcionalidades Principais
 
 ### 1\. Gestão de Frota
