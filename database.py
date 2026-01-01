@@ -377,7 +377,7 @@ def executar_simulacao_passo():
                         """, (r_id, "AVARIA TOTAL", agora, "O robot avariou por excesso de desgaste."))
 
                     # 3. Atualiza o Robot (ou vai carregar, ou avaria de vez)
-                    cursor.execute("UPDATE tasks SET estado = 'Falhada', id_robot = NULL WHERE id_tarefa = ?", (r_tarefa_id,))
+                    cursor.execute("UPDATE tarefas SET estado = 'Falhada', id_robot = NULL WHERE id_tarefa = ?", (r_tarefa_id,))
                     cursor.execute("UPDATE robots SET estado = ?, tarefa_atual = NULL WHERE id_robot = ?", (novo_estado, r_id))
                     
                     mensagens.append(f"ALERTA: Robot {r_id} parou ({tipo_problema}). {msg_extra}")
