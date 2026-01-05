@@ -13,7 +13,7 @@ AREAS_EMPRESA = {
 # Quanto cada tipo de tarefa gasta por passo (10 min)
 PERFIL_LIMPEZA = {
     "Lavagem": {
-        "consumo_bateria": 8,   # %
+        "consumo_bateria": 5,   # %
         "encher_lixo": 5,       # %
         "velocidade": 5         # m² por passo
     },
