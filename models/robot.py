@@ -1,6 +1,4 @@
-#criando a classe 
 import config
-
 
 class Robot:
     def __init__(self, id_robot, modelo, estado = "Estacionado",bateria = 100, deposito = 0, localizacao = "Base", tarefa_atual = None ):

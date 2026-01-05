@@ -1,4 +1,3 @@
-# Arquivo: main.py
 import sys
 import time
 import database as db  
@@ -16,19 +15,19 @@ def exibir_menu():
     print("   SISTEMA DE GESTÃO DE ROBOTS - ISLA")
     print("="*40)
     print("\n--- GESTÃO DE DADOS ---")
-    print("1. Adicionar Novo Robot")    # [cite: 14]
-    print("2. Criar Nova Tarefa")       # [cite: 15]
-    print("3. Listar Todos os Robots")  # [cite: 21]
-    print("4. Listar Todas as Tarefas") # [cite: 22]
+    print("1. Adicionar Novo Robot")    
+    print("2. Criar Nova Tarefa")       
+    print("3. Listar Todos os Robots") 
+    print("4. Listar Todas as Tarefas") 
     
     print("\n--- OPERAÇÕES ---")
-    print("5. Iniciar Tarefa")  # [cite: 16]
-    print("6. Executar Simulação (Passo de Tempo)") # [cite: 5, 49]
-    print("7. Concluir/Cancelar Tarefa")    # [cite: 20]
+    print("5. Iniciar Tarefa") 
+    print("6. Executar Simulação (Passo de Tempo)") 
+    print("7. Concluir/Cancelar Tarefa")   
     
     print("\n--- RELATÓRIOS E MAPAS ---")
-    print("8. Gerar Mapas")    # [cite: 25]
-    print("9. Relatório de Alertas")        # [cite: 26]
+    print("8. Gerar Mapas")   
+    print("9. Relatório de Alertas")        
     print("10. Limpar tela")   
 
     print("\n--- MANUTENÇÃO ---")
@@ -233,10 +232,6 @@ def main():
                         print("Tarefa inválida.")
                 except ValueError:
                     print("ID inválido.")
-            
-            # Simulação -> imprementar depois
-
-            # Confirmação (y/n)
             
             input("\nPressione ENTER para continuar...")
 
